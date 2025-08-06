@@ -1,4 +1,4 @@
-import { useAuth, useClerk, useUser } from "@clerk/clerk-expo";
+import { useClerk, useUser } from "@clerk/clerk-expo";
 import {
   FlatList,
   View,
@@ -19,7 +19,6 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useFetch } from "@/lib/fetch";
 import ROUTES from "@/constants/route";
-import { StatusBar } from "expo-status-bar";
 
 const Home = () => {
   const { setUserLocation, setDestinationLocation } = useLocationStore();

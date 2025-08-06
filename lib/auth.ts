@@ -5,14 +5,13 @@ import ROUTES from "@/constants/route";
 export const googleOAuth = async (startOAuthFlow: any) => {
   try {
     // Start the authentication process by calling `startSSOFlow()`
-    const { createdSessionId, setActive, signIn, signUp } =
-      await startOAuthFlow({
-        strategy: "oauth_google",
-        redirectUrl: AuthSession.makeRedirectUri({
-          scheme: "uberclone",
-          path: ROUTES.HOME,
-        }),
-      });
+    const { createdSessionId, setActive, signUp } = await startOAuthFlow({
+      strategy: "oauth_google",
+      redirectUrl: AuthSession.makeRedirectUri({
+        scheme: "uberclone",
+        path: ROUTES.HOME,
+      }),
+    });
 
     // If sign in was successful, set the active session
     if (createdSessionId) {
