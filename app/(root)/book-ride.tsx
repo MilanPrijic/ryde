@@ -1,12 +1,12 @@
 import { useUser } from "@clerk/clerk-expo";
-import { Image, Text, View } from "react-native";
+import { Platform, Image, Text, View } from "react-native";
 
 import RydeLayout from "@/components/RydeLayout";
 import { icons } from "@/constants";
 import { formatTime } from "@/lib/utils";
 import { useDriverStore, useLocationStore } from "@/store";
 import Payment from "@/components/Payment";
-import { StripeProvider } from "@stripe/stripe-react-native";
+import { useEffect, useState } from "react";
 
 const BookRide = () => {
   const { user } = useUser();
@@ -17,12 +17,35 @@ const BookRide = () => {
     (driver) => +driver.driver_id === selectedDriver,
   )[0];
 
-  return (
-    <StripeProvider
-      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
-      merchantIdentifier="merchant.uber.com"
-      urlScheme="uberclone"
-    >
+  const [StripeProviderComponent, setStripeProviderComponent] = useState<any>(null);
+  const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+  useEffect(() => {
+    // Only try to load the native stripe provider on native platforms and when a key is present.
+    if (Platform.OS === "web" || !publishableKey) {
+      setStripeProviderComponent(null);
+      return;
+    }
+
+    let mounted = true;
+    import("@stripe/stripe-react-native")
+        .then((mod) => {
+          if (mounted) {
+            // prefer named export, fall back to default
+            setStripeProviderComponent(mod.StripeProvider || mod.default || null);
+          }
+        })
+        .catch(() => {
+          // If import fails (not linked / not available), swallow error and render without StripeProvider.
+          if (mounted) setStripeProviderComponent(null);
+        });
+
+    return () => {
+      mounted = false;
+    };
+  }, [publishableKey]);
+
+  const content = (
       <RydeLayout title="Book Ride" snapPoints={["12%", "85%"]}>
         <>
           <Text className="text-xl font-JakartaSemiBold mb-3">
@@ -101,8 +124,22 @@ const BookRide = () => {
           />
         </>
       </RydeLayout>
-    </StripeProvider>
   );
+
+  // If we have a StripeProvider component and a publishable key, wrap; otherwise render content directly.
+  if (StripeProviderComponent && publishableKey) {
+    return (
+        <StripeProviderComponent
+            publishableKey={publishableKey}
+            merchantIdentifier="merchant.uber.com"
+            urlScheme="uberclone"
+        >
+          {content}
+        </StripeProviderComponent>
+    );
+  }
+
+  return content;
 };
 
 export default BookRide;
